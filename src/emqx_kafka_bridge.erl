@@ -132,7 +132,7 @@ format_payload(Message) ->
         {username, Username},
         {topic, Topic},
         {payload, MsgPayload64},
-        {ts, emqx_time:now_secs(Message#message.timestamp)}],
+        {ts, emqx_time:now_ms()}],
 
     {ok, Payload}.
 
