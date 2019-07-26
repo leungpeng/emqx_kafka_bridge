@@ -49,9 +49,9 @@ on_client_connected(#{client_id := ClientId, username := Username}, _ConnAck, _C
     % produce_kafka_payload(<<"event">>, Client),
 
     Action = <<"connected">>,
-    Payload = [{action, Action}, {device_id, ClientId}, {username, Username}, {ts, emqx_time:now_ms()}],
+    Payload = [{action, Action}, {clientid, ClientId}, {username, Username}, {ts, emqx_time:now_ms()}],
     %{ok, Event} = format_event(Payload),
-    produce_kafka_payload(Payload),
+    produce_kafka_event(Payload),
     ok.
 
 on_client_disconnected(#{client_id := ClientId, username := Username}, _Reason, _Env) ->
@@ -59,9 +59,9 @@ on_client_disconnected(#{client_id := ClientId, username := Username}, _Reason, 
     % produce_kafka_payload(<<"event">>, _Client),
 
     Action = <<"disconnected">>,
-    Payload = [{action, Action}, {device_id, ClientId}, {username, Username}, {ts, emqx_time:now_ms()}],
+    Payload = [{action, Action}, {clientid, ClientId}, {username, Username}, {ts, emqx_time:now_ms()}],
     %{ok, Event} = format_event(Payload),
-    produce_kafka_payload(Payload),
+    produce_kafka_event(Payload),
     ok.
 
 %% transform message and return
@@ -88,11 +88,13 @@ ekaf_init(_Env) ->
     KafkaPort = proplists:get_value(port, BrokerValues),
     KafkaPartitionStrategy = proplists:get_value(partitionstrategy, BrokerValues),
     KafkaPartitionWorkers = proplists:get_value(partitionworkers, BrokerValues),
-    KafkaTopic = proplists:get_value(payloadtopic, BrokerValues),
+    KafkaPayloadTopic = proplists:get_value(payloadtopic, BrokerValues),
+    KafkaEventTopic = proplists:get_value(eventtopic, BrokerValues),
     application:set_env(ekaf, ekaf_bootstrap_broker, {KafkaHost, list_to_integer(KafkaPort)}),
     application:set_env(ekaf, ekaf_partition_strategy, list_to_atom(KafkaPartitionStrategy)),
     application:set_env(ekaf, ekaf_per_partition_workers, KafkaPartitionWorkers),
-    application:set_env(ekaf, ekaf_bootstrap_topics, list_to_binary(KafkaTopic)),
+    application:set_env(ekaf, ekaf_bootstrap_payload_topics, list_to_binary(KafkaPayloadTopic)),
+    application:set_env(ekaf, ekaf_bootstrap_event_topics, list_to_binary(KafkaEventTopic)),
     application:set_env(ekaf, ekaf_buffer_ttl, 10),
     application:set_env(ekaf, ekaf_max_downtime_buffer_size, 5),
     % {ok, _} = application:ensure_all_started(kafkamocker),
@@ -100,10 +102,13 @@ ekaf_init(_Env) ->
     % {ok, _} = application:ensure_all_started(ranch),
     {ok, _} = application:ensure_all_started(ekaf).
 
-ekaf_get_topic() ->
-    {ok, Topic} = application:get_env(ekaf, ekaf_bootstrap_topics),
+ekaf_get_payload_topic() ->
+    {ok, Topic} = application:get_env(ekaf, ekaf_bootstrap_payload_topics),
     Topic.
 
+ekaf_get_event_topic() ->
+    {ok, Topic} = application:get_env(ekaf, ekaf_bootstrap_event_topics),
+    Topic.
 
 format_payload(Message) ->
     Username = emqx_message:get_header(username, Message),
@@ -126,7 +131,7 @@ format_payload(Message) ->
 
 
     Payload = [{action, message_publish},
-        {device_id, Message#message.from},
+        {clientid, Message#message.from},
         {username, Username},
         {topic, Topic},
         {payload, MsgPayload64},
@@ -148,10 +153,18 @@ unload() ->
     emqx:unhook('message.acked', fun ?MODULE:on_message_acked/3).
 
 produce_kafka_payload(Message) ->
-    Topic = ekaf_get_topic(),
+    Topic = ekaf_get_payload_topic(),
     {ok, MessageBody} = emqx_json:safe_encode(Message),
 
     % MessageBody64 = base64:encode_to_string(MessageBody),
     Payload = iolist_to_binary(MessageBody),
     ekaf:produce_async_batched(Topic, Payload).
     
+produce_kafka_event(Message) ->
+    Topic = ekaf_get_event_topic(),
+    {ok, MessageBody} = emqx_json:safe_encode(Message),
+
+    % MessageBody64 = base64:encode_to_string(MessageBody),
+    Payload = iolist_to_binary(MessageBody),
+    ekaf:produce_async_batched(Topic, Payload).
+
