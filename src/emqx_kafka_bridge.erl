@@ -129,12 +129,12 @@ format_payload(Message) ->
             MsgPayload64 = MsgPayload
     end,
 
-
+    {ok, MsgPayloadJson} = emqx_json:safe_decode(MsgPayload64),
     Payload = [{action, message_publish},
         {clientid, Message#message.from},
         {username, Username},
         {topic, Topic},
-        {payload, emqx_json:safe_decode(MsgPayload64)},
+        {payload, MsgPayloadJson},
         {ts, emqx_time:now_ms()}],
 
     {ok, Payload}.
