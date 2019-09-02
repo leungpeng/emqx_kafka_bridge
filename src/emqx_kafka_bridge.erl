@@ -134,7 +134,7 @@ format_payload(Message) ->
         {clientid, Message#message.from},
         {username, Username},
         {topic, Topic},
-        {payload, MsgPayload64},
+        {payload, emqx_json:safe_decode(MsgPayload64)},
         {ts, emqx_time:now_ms()}],
 
     {ok, Payload}.
