@@ -116,10 +116,10 @@ format_payload(Message) ->
     Topic = Message#message.topic,
     Tail = string:right(binary_to_list(Topic), 4),
     RawType = string:equal(Tail, <<"_raw">>),
-    % io:format("Tail= ~s , RawType= ~s~n",[Tail,RawType]),
+    io:format("Tail= ~s , RawType= ~s~n",[Tail,RawType]),
 
     MsgPayload = Message#message.payload,
-    % io:format("MsgPayload : ~s~n", [MsgPayload]),
+    io:format("MsgPayload : ~s~n", [MsgPayload]),
 
     if
         RawType == true ->
