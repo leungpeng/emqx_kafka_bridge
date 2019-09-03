@@ -162,7 +162,6 @@ produce_kafka_payload(Message) ->
     
 produce_kafka_event(Message) ->
     Topic = ekaf_get_event_topic(),
-    io:format("Message: ~s~n",[Message]),
     {ok, MessageBody} = emqx_json:safe_encode(Message),
 
     % MessageBody64 = base64:encode_to_string(MessageBody),
