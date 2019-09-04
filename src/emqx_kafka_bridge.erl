@@ -116,10 +116,10 @@ format_payload(Message) ->
     Topic = Message#message.topic,
     Tail = string:right(binary_to_list(Topic), 4),
     RawType = string:equal(Tail, <<"_raw">>),
-    io:format("Tail= ~s , RawType= ~s~n",[Tail,RawType]),
+    % io:format("Tail= ~s , RawType= ~s~n",[Tail,RawType]),
 
     MsgPayload = Message#message.payload,
-    io:format("MsgPayload : ~s~n", [MsgPayload]),
+    % io:format("MsgPayload : ~s~n", [MsgPayload]),
 
     if
         RawType == true ->
@@ -130,20 +130,21 @@ format_payload(Message) ->
     end,
 
     IsJson = jsx:is_json(MsgPayload64),
+    io:format("IsJson= ~s , MsgPayload64= ~s~n",[IsJson,MsgPayload64]),
     if
         IsJson == true ->
             MsgPayloadJson = emqx_json:safe_decode(MsgPayload64);
         IsJson == false ->
             MsgPayloadJson = MsgPayload64
     end,
-
+    io:format("MsgPayload64= ~s~n",[MsgPayloadJson]),
     Payload = [{action, message_publish},
         {clientid, Message#message.from},
         {username, Username},
         {topic, Topic},
         {payload, MsgPayloadJson},
         {ts, emqx_time:now_ms()}],
-
+    io:format("~s~n", [Payload]),
     {ok, Payload}.
 
 
