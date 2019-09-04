@@ -133,7 +133,7 @@ format_payload(Message) ->
     io:format("IsJson= ~s , MsgPayload64= ~s~n",[IsJson,MsgPayload64]),
     if
         IsJson == true ->
-            MsgPayloadJson = emqx_json:safe_decode(MsgPayload64);
+            {ok, MsgPayloadJson} = emqx_json:safe_decode(MsgPayload64);
         IsJson == false ->
             MsgPayloadJson = MsgPayload64
     end,
