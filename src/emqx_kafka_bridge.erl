@@ -137,7 +137,7 @@ format_payload(Message) ->
         IsJson == false ->
             MsgPayloadJson = MsgPayload64
     end,
-    io:format("MsgPayload64= ~s~n",[MsgPayloadJson]),
+
     Payload = [{action, message_publish},
         {clientid, Message#message.from},
         {username, Username},
