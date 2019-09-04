@@ -144,7 +144,7 @@ format_payload(Message) ->
         {topic, Topic},
         {payload, MsgPayloadJson},
         {ts, emqx_time:now_ms()}],
-    io:format("~s~n", [Payload]),
+    %io:format("~s~n", [Payload]),
     {ok, Payload}.
 
 
