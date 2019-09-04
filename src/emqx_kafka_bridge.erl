@@ -129,7 +129,14 @@ format_payload(Message) ->
             MsgPayload64 = MsgPayload
     end,
 
-    {ok, MsgPayloadJson} = emqx_json:safe_decode(MsgPayload64),
+    IsJson = jsx:is_json(MsgPayload64),
+    if
+        IsJson == true ->
+            MsgPayloadJson = emqx_json:safe_decode(MsgPayload64);
+        IsJson == false ->
+            MsgPayloadJson = MsgPayload64
+    end,
+
     Payload = [{action, message_publish},
         {clientid, Message#message.from},
         {username, Username},
